@@ -53,7 +53,7 @@ module decoder(
 	output  [11:0] immediate_po,
 	
 	output arith_2op_po,
-	output arith_1op_po, 
+	output arith_1op_po,
 	
 	output movi_lower_po,
 	output movi_higher_po,
@@ -76,9 +76,42 @@ module decoder(
 	output halt_cmd_po,
 	output rst_cmd_po
 );
-   
-   // Input signals have the suffix "_pi: and output signals the prefix "_po".
-   // Use a series of assign statements to set the output signals.
-   // You may (find it convenient to) define some auxiliary wire signals for compactness. 		
+	wire [3:0] op_code = instruction_pi[15:12];
 
+	assign arith_2op_po = op_code == `ARITH_2OP;
+	assign arith_1op_po = op_code == `ARITH_1OP;
+
+	assign movi_lower_po = (op_code == `MOVI) & ~instruction_pi[8];
+	assign movi_higher_po = (op_code == `MOVI) & instruction_pi[8];
+
+	assign addi_po = op_code == `ADDI;
+	assign subi_po = op_code == `SUBI;
+
+	assign load_po = op_code == `LOAD;
+	assign store_po = op_code == `STOR;
+
+	assign branch_eq_po = op_code == `BEQ;
+	assign branch_ge_po = op_code == `BGE;
+	assign branch_le_po = op_code == `BLE;
+	assign branch_carry_po = op_code == `BC;
+
+	assign jump_po = op_code == `J;
+
+	wire is_ctrl = op_code == `CONTROL;
+	wire [11:0] ctrl_op = instruction_pi[11:0];
+
+	assign stc_cmd_po = is_ctrl & (ctrl_op == `STC);
+	assign stb_cmd_po = is_ctrl & (ctrl_op == `STB);
+	assign rst_cmd_po = is_ctrl & (ctrl_op == `RESET);
+	assign halt_cmd_po = is_ctrl & (ctrl_op == `HALT);
+
+	assign alu_func_po = instruction_pi[2:0];
+	assign destination_reg_po = instruction_pi[11:9];
+
+	wire is_branch = branch_eq_po | branch_ge_po | branch_le_po | branch_carry_po;
+
+	assign source_reg1_po = is_branch ? instruction_pi[11:9] : instruction_pi[8:6];
+	assign source_reg2_po = is_branch ? instruction_pi[8:6] : instruction_pi[5:3];
+
+	assign immediate_po = instruction_pi[11:0];
 endmodule // decoder
